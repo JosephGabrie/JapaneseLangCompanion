@@ -21,10 +21,12 @@ type KanaKanji struct {
 
 type Progress struct {
     DateCompleted   time.Time `json:"date_completed"`
-    NextDate        time.Time `json:"next_date"`
+    NextDate        time.Time `json:"next_date"`        // Consider whether this is the same as `next_time_review`
     MasteryLevel    int       `json:"mastery_level"`
-    LastKanaCompleted   time.Time `json:"last_completed"`
+    NextTimeReview  time.Time `json:"next_time_review"` // Renamed for consistency
+    LastLearned     bool      `json:"last_learned"`     // Fixed JSON tag and field name
 }
+
 
 type Users struct {
     UserID   int    `json:"user_id"`
@@ -36,9 +38,9 @@ type Users struct {
 func getKanaKanjiHandler(c *fiber.Ctx, db *sql.DB) error {
     var kanaKanjiList []KanaKanji
 
-    rows, err := db.Query("SELECT kanakanji_id, character, romanization FROM kanaKanji")
+    rows, err := db.Query("SELECT kanakanji_id, character, romanization FROM userprogress")
     if err != nil {
-        return c.Status(500).JSON(fiber.Map{"error": "Failed to query data"})
+        return c.Status(500).JSON(fiber.Map{"error": "Failed to get user progress"})
     }
     defer rows.Close()
 
@@ -60,12 +62,14 @@ Make the name sound cooler
 
 //Select kanakanji_id, character, romanization FROM kanakanji
 func learnKanaTimer(c *fiber.Ctx, db * sql.DB) error {
+    var kanaKanjiID int 
     kanaKanjiList := make([]KanaKanji, 0, 6)
     
-    nextSet := 10
+     nextSet:= db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true").Scan(&kanaKanjiID)
+    fmt.Println(nextSet);
     rows, err := db.Query("SELECT * FROM kanakanji ORDER BY kanakanji_id ASC LIMIT 7 OFFSET $1", nextSet)
     if err != nil {
-        return c.Status(500).JSON(fiber.Map{"error": "Failed to query data"})
+        return c.Status(500).JSON(fiber.Map{"error": "Failed to query data1"})
     }
     defer rows.Close()
 
