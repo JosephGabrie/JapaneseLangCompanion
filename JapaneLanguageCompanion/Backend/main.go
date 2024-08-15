@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq" // add this
 
 	"github.com/gofiber/fiber/v2"
-	_ "github.com/gofiber/template/html/v2"
+	"github.com/gofiber/template/html/v2"
 )
 
 type KanaKanji struct {
@@ -35,100 +35,43 @@ type Users struct {
     Password string `json:"password"`
 }
 
-func getKanaKanjiHandler(c *fiber.Ctx, db *sql.DB) error {
-    var kanaKanjiList []KanaKanji
-
-    rows, err := db.Query("SELECT kanakanji_id, character, romanization FROM userprogress")
-    if err != nil {
-        return c.Status(500).JSON(fiber.Map{"error": "Failed to get user progress"})
-    }
-    defer rows.Close()
-
-    for rows.Next() {
-        var kanaKanji KanaKanji
-        if err := rows.Scan(&kanaKanji.KanaKanji_ID, &kanaKanji.Character, &kanaKanji.Romanization); err != nil {
-           return c.Status(500).JSON(fiber.Map{"error": "Failed to scan row "})
-
-        }
-        kanaKanjiList = append(kanaKanjiList, kanaKanji)
-    }
-
-    return c.JSON(kanaKanjiList)
-}
-/*
-TODO:
-Make the name sound cooler
-*/
-
 //Select kanakanji_id, character, romanization FROM kanakanji
-func learnKanaTimer(c *fiber.Ctx, db * sql.DB) error {
+func learnKana(c *fiber.Ctx, db * sql.DB) error {
     var kanaKanjiID int 
     kanaKanjiList := make([]KanaKanji, 0, 6)
     
-     nextSet:= db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true").Scan(&kanaKanjiID)
-    fmt.Println(nextSet);
+    nextSet:= db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true").Scan(&kanaKanjiID)
+   
     rows, err := db.Query("SELECT * FROM kanakanji ORDER BY kanakanji_id ASC LIMIT 7 OFFSET $1", nextSet)
     if err != nil {
         return c.Status(500).JSON(fiber.Map{"error": "Failed to query data1"})
     }
     defer rows.Close()
 
-    // count := 0
     for rows.Next() {
         var kanaKanji KanaKanji
         if err := rows.Scan(&kanaKanji.KanaKanji_ID, &kanaKanji.Character, &kanaKanji.Romanization); err != nil {
             return c.Status(500).JSON(fiber.Map{"error": "Failed to scan row"})
         }
         kanaKanjiList = append(kanaKanjiList, kanaKanji)
-        // count ++
-        // if count >= 7 {
-        //     break
-        // }
+
     }
 
-    return c.JSON(kanaKanjiList)
+    // return c.JSON(kanaKanjiList)
+     return c.Render("index", fiber.Map{
+        "kanaList": kanaKanjiList,
+     })
     }
-    
- //Check the progression table for LastCompleted if its True grab the next 7 kana
- //Write an edge case that checks that it is in scope
 
- //Write a while loop
- 
+    func deleteKanaKanji(c *fiber.Ctx, db *sql.DB) error {
+    kanaKanjiToDelete := c.Query("")
+    db.Exec("DELETE from todos WHERE item=$1", kanaKanjiToDelete)
+   return c.SendString("deleted")
+}
 
-
-
-
-
-
-/*
-Written by Joseph N Gabrie
-8/12/24
-This is the function that updates the user's flashcards
-We expect a JSON list from the frontend that should display:
-
-
-*/
-//func kanaKanjiRetrievalHandler(c *fiber.Ctx, db *sql.DB) error {}
-
-//func lessonUpdateHandler(c *fiber.Ctx, db *sql.DB) error {} 
-
-// func postHandler(c *fiber.Ctx, db *sql.DB) error {
-//    newTodo := todo{}
-//    if err := c.BodyParser(&newTodo); err != nil {
-//        log.Printf("An error occured: %v", err)
-//        return c.SendString(err.Error())
-//    }
-//    fmt.Printf("%v", newTodo)
-//    if newTodo.Item != "" {
-//        _, err := db.Exec("INSERT into todos VALUES ($1)", newTodo.Item)
-//        if err != nil {
-//            log.Fatalf("An error occured while executing query: %v", err)
-//        }
-//    }
-
-//    return c.Redirect("/")
-// }
-
+func update_user_kanaKanji(c *fiber.Ctx, db * sql.DB) error {
+    old
+}
 func main() {
    connStr := "postgres://postgres:Josephg57!@localhost:5432/kanaKanji?sslmode=disable"
    // Connect to database
@@ -136,19 +79,23 @@ func main() {
    if err != nil {
        log.Fatal(err)
    }
-   app := fiber.New()
-
-   app.Get("/kanakanji", func(c *fiber.Ctx) error {
-        return getKanaKanjiHandler(c, db)
+   engine := html.New("../Frontend/views", ".html")
+   app := fiber.New(fiber.Config{
+    Views: engine,
    })
-   
+
    app.Get("/", func(c *fiber.Ctx) error {
-        return learnKanaTimer(c, db)
+        return learnKana(c, db)
+   })
+
+   app.Delete("/", func(c *fiber.Ctx) error {
+        return deleteKanaKanji(c, db)
    })
    port := os.Getenv("PORT")
    if port == "" {
        port = "3000"
    }
-   app.Static("/", "../Frontend/public")
+
+   app.Static("/", "../Frontend/public") // add this before starting the app
    log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
 }
