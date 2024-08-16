@@ -1,18 +1,4 @@
-function removeFromDb(item){
-    fetch(`/delete?item=${item}`, {method: "Delete"}).then(res =>{
-        if (res.status == 200){
-            window.location.pathname = "/"
-        }
-    })
- }
- 
- function updateDb(item) {
-    let input = document.getElementById(item)
-    let newitem = input.value
-    fetch(`/update?olditem=${item}&newitem=${newitem}`, {method: "PUT"}).then(res =>{
-        if (res.status == 200){
-        alert("Database updated")
-            window.location.pathname = "/"
-        }
-    })
- }
+fetch(" http://127.0.0.1:3000 ")
+    .then(response => console.log(response.json()))
+    .then(data => console.log(data))
+    .catch(error => console.error(error));
