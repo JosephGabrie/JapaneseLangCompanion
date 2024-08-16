@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq" // add this
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html/v2"
+    "github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type KanaKanji struct {
@@ -97,10 +97,13 @@ func main() {
    if err != nil {
        log.Fatal(err)
    }
-   engine := html.New("../Frontend/views", ".html")
-   app := fiber.New(fiber.Config{
-    Views: engine,
-   })
+
+   app := fiber.New()
+
+   app.Use(cors.New(cors.Config{
+    AllowOrigins: "http://127.0.0.1:5500",
+    AllowHeaders: "Origin, Content-Type, Accept",
+   }))
 
    app.Get("/", func(c *fiber.Ctx) error {
         return GetLearnKana(c, db)
@@ -116,7 +119,5 @@ func main() {
    if port == "" {
        port = "3000"
    }
-
-   app.Static("/", "../Frontend/public") // add this before starting the app
    log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
 }
