@@ -21,15 +21,31 @@
     </style>
 </head>
 <body>
-    <h1>Kana/Kanji Learning2</h1>
+                   
+    <h1>Kana/Kanji Learning</h1>
     <div id="kanaKanjiContainer">
-        {{range .kanaList}}
+        {{range $index, $element := .kanaList}}
             <div class="kanaKanjiItem">
-                <p><strong>{{.Character}}</strong> - 
-                    <input type="text" id = "name" name = "name" required minlength="1" maxlength="4" size = "10" /> 
+                <p><strong>{{$element.Character}}</strong> - 
+                    <div class="row m-1 p-3">
+                        <div class="col col-11 mx-auto">
+                            <form action="/" method="POST" class="row bg-white rounded shadow-sm p-2 add-todo-wrapper align-items-center justify-content-center">
+                                <div class="col">
+                                    <!-- Unique identifier based on character -->
+                                    <input name="Item-{{$index}}" class="form-control form-control-lg border-0 add-todo-input bg-transparent rounded" type="text" placeholder="Add new ..">
+                                </div>
+                                <div class="col-auto px-0 mx-0 mr-2">
+                                    <button type="submit" class="btn btn-primary">Add</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </p>
             </div>
         {{end}}
     </div>
+    
+    <script src="/public/index.js"></script>
+
 </body>
 </html>

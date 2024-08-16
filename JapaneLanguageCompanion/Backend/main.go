@@ -36,7 +36,7 @@ type Users struct {
 }
 
 //Select kanakanji_id, character, romanization FROM kanakanji
-func learnKana(c *fiber.Ctx, db * sql.DB) error {
+func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
     var kanaKanjiID int 
     kanaKanjiList := make([]KanaKanji, 0, 6)
     
@@ -57,21 +57,39 @@ func learnKana(c *fiber.Ctx, db * sql.DB) error {
 
     }
 
-    // return c.JSON(kanaKanjiList)
-     return c.Render("index", fiber.Map{
-        "kanaList": kanaKanjiList,
-     })
+    if err := rows.Err(); err != nil {
+        return c.Status(500).JSON(fiber.Map{"error": "Errro occured during row iteration"})
     }
 
-    func deleteKanaKanji(c *fiber.Ctx, db *sql.DB) error {
+    // instead of returning a webpage we are going to return a json list so that in the future we can make dynamic changes to the content of the json file
+    return c.JSON(kanaKanjiList)
+
+    }
+
+    type todo struct {
+        Item string
+     }
+     
+     func postLearnKana(c *fiber.Ctx, db *sql.DB) error {
+        newTodo := todo{}
+        if err := c.BodyParser(&newTodo); err != nil {
+            log.Printf("An error occured: %v", err)
+            return c.SendString(err.Error())
+        }
+        fmt.Printf("%v", newTodo)
+
+        return c.Redirect("/")
+     }
+
+func deleteKanaKanji(c *fiber.Ctx, db *sql.DB) error {
     kanaKanjiToDelete := c.Query("")
     db.Exec("DELETE from todos WHERE item=$1", kanaKanjiToDelete)
    return c.SendString("deleted")
 }
 
-func update_user_kanaKanji(c *fiber.Ctx, db * sql.DB) error {
-    old
-}
+// func update_user_kanaKanji(c *fiber.Ctx, db * sql.DB) error {
+//     old.kana
+// }
 func main() {
    connStr := "postgres://postgres:Josephg57!@localhost:5432/kanaKanji?sslmode=disable"
    // Connect to database
@@ -85,7 +103,10 @@ func main() {
    })
 
    app.Get("/", func(c *fiber.Ctx) error {
-        return learnKana(c, db)
+        return GetLearnKana(c, db)
+   })
+   app.Post("/", func(c *fiber.Ctx) error {
+    return postLearnKana(c, db)
    })
 
    app.Delete("/", func(c *fiber.Ctx) error {
