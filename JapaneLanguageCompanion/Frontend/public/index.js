@@ -1,21 +1,18 @@
-fetch("http://127.0.0.1:3000/")
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById("characterInputs"); // Replace with your container ID
+fetch(" http://127.0.0.1:3000/ ")
+    .then(res => res.json())
+    .then(data => {
+        const arrayLength = data.length;
+        
+        for(let i=0; i< arrayLength; i++) {
+            const characterData= data.find(item => item.kanakanji_id === i);
+            if (characterData) {
+                console.log(characterData.character);
+                document.getElementById("japLetter").innerHTML = characterData.character
+            }
+            console.log(data[i]);
 
-    data.forEach((character, index) => {
-      const label = document.createElement("label");
-      label.textContent = character.character;
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.id = `input_${index}`; // Unique ID for each input
-
-      const containerDiv = document.createElement("div");
-      containerDiv.appendChild(label);
-      containerDiv.appendChild(input);
-
-      container.appendChild(containerDiv);
-    });
-  })
-  .catch(error => console.error(error));
+    
+        }
+        
+    })
+    .catch(error => console.error(error))
