@@ -21,24 +21,27 @@ type KanaKanji struct {
 
 type Progress struct {
 	UserID          int`json:"user_id"`// Capitalized field name
-	KanakanjiID     int`json:"kanakanji_id"`// Added missing colon and quotes
+	KanaKanjiID     int`json:"kanakanji_id"`// Added missing colon and quotes
 	TimeCompleted   time.Time `json:"timecompleted"`// Consistent naming and JSON tag
 	NextTimeReview  time.Time `json:"next_time_review"`// Consistent naming and JSON tag
 	MasteryLevel    int`json:"masterylevel"`// JSON tag fixed
 	LastLearned     bool`json:"lastlearned"`// JSON tag fixed
+    userTypedAnswer bool`json: "usertypedanswer`
+
 }
 
 type Users struct {
-    UserID   int    `json:"user_id"`
+    User_ID   int    `json:"user_id"`
     Username string `json:"username"`
     Email    string `json:"email"`
     Password string `json:"password"`
 }
 
+
 //Select kanakanji_id, character, romanization FROM kanakanji
 func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
     var kanaKanjiID int 
-    kanaKanjiList := make([]KanaKanji, 0, 6)
+    learnKanaKanjiList := make([]KanaKanji, 0, 6)
     
     nextSet:= db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true").Scan(&kanaKanjiID)
     err := nextSet
@@ -58,19 +61,50 @@ func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
         if err := rows.Scan(&kanaKanji.KanaKanji_ID, &kanaKanji.Character, &kanaKanji.Romanization); err != nil {
             return c.Status(500).JSON(fiber.Map{"error": "Failed to scan row"})
         }
-        kanaKanjiList = append(kanaKanjiList, kanaKanji)
+        learnKanaKanjiList = append(learnKanaKanjiList, kanaKanji)
 
     }
 
     if err := rows.Err(); err != nil {
         return c.Status(500).JSON(fiber.Map{"error": "Errro occured during row iteration"})
     }
-
     // instead of returning a webpage we are going to return a json list so that in the future we can make dynamic changes to the content of the json file
-    return c.JSON(kanaKanjiList)
+    return c.JSON(learnKanaKanjiList)
 
     }
+    /*
+    This function is very similar to getlearnkana but the main difference is that it checks if the nexttime review is before our current time.
+    and instead of grabing a limit of 7 its going to grab all elements that fit the condition.
+    */
+    
+    func GetReviewKanaKanji(c *fiber.Ctx, db *sql.DB) error{
+        currentTime := time.Now()
+        var reviewKanaKanjiList []KanaKanji
+        
+        //Get all jabajabhu records that are due for review
+        rows, err := db.Query(`
+        SELECT kk.kanakanji_id, kk.character, kk.romanization
+        FROM kanakanji kk
+        INNER JOIN userprogress up ON kk.kanakanji_id = up.kanakanji_id
+        WHERE up.next_time_review <= $1 `, currentTime)
 
+        if err != nil {
+            return c.Status(500).JSON(fiber.Map{"error": "Failed to scan row"})
+        }
+        defer rows.Close()
+
+        for rows.Next() {
+            var kanaKanji KanaKanji
+            if err := rows.Scan(&kanaKanji.KanaKanji_ID, &kanaKanji.Character, &kanaKanji.Romanization); err != nil{
+                return c.Status(500).JSON(fiber.Map{"error": "Failed to scan rows"})
+            }
+            reviewKanaKanjiList = append(reviewKanaKanjiList, kanaKanji)
+        }
+        if err := rows.Err(); err != nil {
+            return c.Status(500).JSON(fiber.Map{"error": "Error occured during row iteration"})   
+        }
+    return c.JSON(reviewKanaKanjiList)
+    }
     type todo struct {
         Item string
      }
@@ -95,6 +129,13 @@ func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
             })
 
         }
+        
+        userTypedAnswer := true
+        newUserMastery := calculateUserMastery(&newProgress, userTypedAnswer)
+
+        fmt.Println("mastery level in updateUserProgress", newUserMastery)
+
+        newProgress.NextTimeReview = setNextTime(newUserMastery)
         query := `UPDATE userprogress
         SET timecompleted = $1,
         next_time_review = $2,
@@ -103,7 +144,7 @@ func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
         WHERE user_id = $5 AND kanakanji_id = $6
         `
 
-        result, err := db.Exec(query, newProgress.TimeCompleted, newProgress.NextTimeReview, newProgress.MasteryLevel, newProgress.LastLearned, newProgress.UserID, newProgress.KanakanjiID)
+        result, err := db.Exec(query, newProgress.TimeCompleted, newProgress.NextTimeReview, newProgress.MasteryLevel, newProgress.LastLearned, newProgress.UserID, newProgress.KanaKanjiID)
         if err != nil {
             return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "error": fmt.Sprintf("Failed to execute update query: %v", err),
@@ -130,6 +171,51 @@ func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
     return c.SendString("deleted")
     }
 
+
+    func calculateUserMastery(progress *Progress, userTypedAnswer bool ) int {
+        
+        masterylevel := progress.MasteryLevel
+        fmt.Println(masterylevel)
+        if userTypedAnswer {
+            masterylevel++
+        } else if !userTypedAnswer{
+            masterylevel--
+        }
+
+        progress.MasteryLevel = masterylevel
+        fmt.Println("mastery level in calculate user mastery ", masterylevel)
+         if masterylevel > 0 && masterylevel < 4{
+            return 1
+        } else if masterylevel >= 4 && masterylevel < 6{
+            return 2
+        } else if masterylevel >= 6 && masterylevel < 7{
+            return 3
+        } else if masterylevel >= 7{
+            return 4
+        }
+        return 0
+    }
+
+    func setNextTime(userAnswer int) time.Time {
+        currentTime := time.Now()
+        var nextTime time.Time
+
+        switch userAnswer {
+        case 1:
+            nextTime = currentTime.Add(24 * time.Hour) // 24 hours later
+        case 2:
+            nextTime = currentTime.Add(72 * time.Hour) // 72 hours (3 days) later
+        case 3:
+            nextTime = currentTime.AddDate(0, 0, 7) // 1 week later
+        case 4:
+            nextTime = currentTime.AddDate(0, 1, 14) // 1 month and 2 weeks later
+        default:
+            nextTime = currentTime // If userAnswer doesn't match any case, keep it as current time
+        }
+
+        return nextTime
+    }
+
 // func update_user_kanaKanji(c *fiber.Ctx, db * sql.DB) error {
 //     old.kana
 // }
@@ -143,6 +229,7 @@ func main() {
 
    app := fiber.New()
 
+
    app.Use(cors.New(cors.Config{
     AllowOrigins: "http://127.0.0.1:5500",
     AllowHeaders: "Origin, Content-Type, Accept",
@@ -150,6 +237,9 @@ func main() {
 
    app.Get("/", func(c *fiber.Ctx) error {
         return GetLearnKana(c, db)
+   })
+   app.Get("/reviewKanaKanji", func(c *fiber.Ctx) error {
+    return GetReviewKanaKanji(c, db)
    })
    app.Post("/", func(c *fiber.Ctx) error {
     return postLearnKana(c, db)
@@ -161,6 +251,7 @@ func main() {
    app.Delete("/", func(c *fiber.Ctx) error {
         return deleteKanaKanji(c, db)
    })
+
    port := os.Getenv("PORT")
    if port == "" {
        port = "3000"
