@@ -26,8 +26,7 @@ type Progress struct {
 	NextTimeReview  time.Time `json:"next_time_review"`// Consistent naming and JSON tag
 	MasteryLevel    int`json:"masterylevel"`// JSON tag fixed
 	LastLearned     bool`json:"lastlearned"`// JSON tag fixed
-    userTypedAnswer bool`json: "usertypedanswer`
-
+    
 }
 
 type Users struct {
@@ -136,6 +135,7 @@ func GetLearnKana(c *fiber.Ctx, db * sql.DB) error {
         fmt.Println("mastery level in updateUserProgress", newUserMastery)
 
         newProgress.NextTimeReview = setNextTime(newUserMastery)
+        fmt.Println(newProgress.NextTimeReview)
         query := `UPDATE userprogress
         SET timecompleted = $1,
         next_time_review = $2,
