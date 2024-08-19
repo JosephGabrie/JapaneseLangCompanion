@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"japlearning/models"
 	"time"
-
 	"github.com/gofiber/fiber/v2"
 )
 func GetLearnKana(c *fiber.Ctx, db *sql.DB) error {
@@ -68,6 +67,7 @@ func GetReviewKanaKanji(c *fiber.Ctx, db *sql.DB) error {
 	}
 	return c.JSON(reviewKanaKanjiList)
 }
+
 
 func DeleteKanaKanji(c *fiber.Ctx, db *sql.DB) error {
 	kanaKanjiToDelete := c.Query("")
