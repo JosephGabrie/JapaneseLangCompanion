@@ -46,7 +46,12 @@ func main() {
    app.Delete("/", func(c *fiber.Ctx) error {
         return handlers.DeleteKanaKanji(c, db)
    })
-
+   app.Get("/signin", func(c *fiber.Ctx) error {
+    return handlers.GetUsersSignIn(c, db)
+   })
+   app.Post("/signup", func(c *fiber.Ctx) error {
+    return handlers.PostUsers(c, db)
+   })
    port := os.Getenv("PORT")
    if port == "" {
        port = "3000"

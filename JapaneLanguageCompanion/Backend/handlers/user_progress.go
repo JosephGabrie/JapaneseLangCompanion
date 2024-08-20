@@ -91,3 +91,4 @@ func UpdateUserProgress(c *fiber.Ctx, db *sql.DB) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(newProgress)
 }
+
