@@ -1,18 +1,18 @@
-function removeFromDb(item){
-    fetch(`/delete?item=${item}`, {method: "Delete"}).then(res =>{
-        if (res.status == 200){
-            window.location.pathname = "/"
+fetch(" http://127.0.0.1:3000/ ")
+    .then(res => res.json())
+    .then(data => {
+        const arrayLength = data.length;
+        
+        for(let i=0; i< arrayLength; i++) {
+            const characterData= data.find(item => item.kanakanji_id === i);
+            if (characterData) {
+                console.log(characterData.character);
+                document.getElementById("japLetter").innerHTML = characterData.character
+            }
+            console.log(data[i]);
+
+    
         }
+        
     })
- }
- 
- function updateDb(item) {
-    let input = document.getElementById(item)
-    let newitem = input.value
-    fetch(`/update?olditem=${item}&newitem=${newitem}`, {method: "PUT"}).then(res =>{
-        if (res.status == 200){
-        alert("Database updated")
-            window.location.pathname = "/"
-        }
-    })
- }
+    .catch(error => console.error(error))
