@@ -1,14 +1,32 @@
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1> Hello World</h1>
+    <head>
+        <meta charset = "UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Flash Card App</title >
+        <link href="/JapaneseLangCompanion/JapaneLanguageCompanion/Frontend/public/style.css"rel="stylesheet" type="text/css"><link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+    </head>
 
-    <p id="japLetter"></p>
-    <script src="../public/index.js"></script>
 
-</body>
-</html>
+    <body onload= "getRandomWord()">
+            <h1 class="title">Hello There</h1>
+            <p id="japLetter"></p>
+
+            <div class="term">
+                <h3>Term</h3>
+            </div>
+
+            <div class="definition">
+                <h3>Definition</h3>
+            </div>
+
+            <div class="button">
+                <button class="check">Check Definition</button>
+                <button class ="next">Next Definition</button>
+            </div>
+            <script src ="/JapaneseLangCompanion/JapaneLanguageCompanion/Frontend/public/index.js"></script>
+    </body>
+</html> 
