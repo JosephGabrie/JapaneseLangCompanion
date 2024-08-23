@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
+var jwtSecret = []byte("your-secret-key")
 
 func GetUsersSignIn(c *fiber.Ctx, db *sql.DB) error{
 	var userData models.Users
@@ -39,10 +41,26 @@ func GetUsersSignIn(c *fiber.Ctx, db *sql.DB) error{
 					"error": "passwords did not match",
 				})
 			} 
-			return c.JSON(fiber.Map{
-				"user_id": liveUserID,
+
+		// Create JWT token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"user_id": liveUserID,
+			"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		})
+
+		// Sign the token with your secret key
+		tokenString, err := token.SignedString(jwtSecret)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Could not generate token",
 			})
 		}
+
+		return c.JSON(fiber.Map{
+			"token": tokenString,
+		})
+	}
+
 	/*
 		This will run if the user gives their email to sign
 	*/
@@ -58,15 +76,32 @@ func GetUsersSignIn(c *fiber.Ctx, db *sql.DB) error{
 				"error": "passwords did not match",
 			})
 		} 
-		return c.JSON(fiber.Map{
+		// Create JWT token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"user_id": liveUserID,
+			"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		})
+
+		// Sign the token with your secret key
+		tokenString, err := token.SignedString(jwtSecret)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Could not generate token",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"token": tokenString,
 		})
 	}
+
 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 		"error": "Invalid username or email",
 	})
 
 }
+
+
  func PostUsers (c *fiber.Ctx, db *sql.DB) error{
 	var userData models.RegistrationData
 	var existingUsername string
@@ -122,6 +157,7 @@ func GetUsersSignIn(c *fiber.Ctx, db *sql.DB) error{
 }
 
 
+
 func EditUser(){
 
 }
@@ -129,4 +165,3 @@ func EditUser(){
 func DeleteUser(){
 
 }
-
