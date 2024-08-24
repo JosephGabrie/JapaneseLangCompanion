@@ -7,10 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 func GetLearnKana(c *fiber.Ctx, db *sql.DB) error {
+
+	userID :=c.Locals("user_id").(int)
 	var kanaKanjiID int
 	learnKanaKanjiList := make([]models.KanaKanji, 0, 6)
 
-	nextSet := db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true").Scan(&kanaKanjiID)
+	nextSet := db.QueryRow("SELECT kanakanji_id FROM userprogress WHERE lastlearned = true and user_id = $1", userID).Scan(&kanaKanjiID)
 	err := nextSet
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "last learn has no true values"})
@@ -40,15 +42,17 @@ func GetLearnKana(c *fiber.Ctx, db *sql.DB) error {
 }
 
 func GetReviewKanaKanji(c *fiber.Ctx, db *sql.DB) error {
+	userID := c.Locals("user_id").(int)
+
 	currentTime := time.Now()
 	var reviewKanaKanjiList []models.KanaKanji
 
-	//Get all jabajabhu records that are due for review
+	//Get all  records that are due for review
 	rows, err := db.Query(`
         SELECT kk.kanakanji_id, kk.character, kk.romanization
         FROM kanakanji kk
         INNER JOIN userprogress up ON kk.kanakanji_id = up.kanakanji_id
-        WHERE up.next_time_review <= $1 `, currentTime)
+        WHERE up.next_time_review <= $1 AND up.user_id = $2 `, currentTime, userID)
 
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to scan row"})

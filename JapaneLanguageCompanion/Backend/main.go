@@ -10,6 +10,7 @@ import (
     "github.com/gofiber/fiber/v2/middleware/cors"
     "japlearning/handlers"
     _ "github.com/lib/pq"
+    
 )
 
 
@@ -33,25 +34,26 @@ func main() {
     AllowHeaders: "Origin, Content-Type, Accept",
    }))
 
-   app.Get("/", func(c *fiber.Ctx) error {
+   app.Post("/signin", func(c *fiber.Ctx) error {
+    return handlers.GetUsersSignIn(c, db)
+   })
+   
+   app.Post("/signup", func(c *fiber.Ctx) error {
+    return handlers.PostUsers(c, db)
+   })
+
+   app.Get("/", handlers.VerifyJwt,func(c *fiber.Ctx) error {
         return handlers.GetLearnKana(c, db)
    })
    app.Get("/reviewKanaKanji", func(c *fiber.Ctx) error {
     return handlers.GetReviewKanaKanji(c, db)
    })
 
-   app.Put("/", func(c *fiber.Ctx) error {
+   app.Put("/update", func(c *fiber.Ctx) error {
     return handlers.UpdateUserProgress(c, db)
    })
-   app.Delete("/", func(c *fiber.Ctx) error {
-        return handlers.DeleteKanaKanji(c, db)
-   })
-   app.Get("/signin", func(c *fiber.Ctx) error {
-    return handlers.GetUsersSignIn(c, db)
-   })
-   app.Post("/signup", func(c *fiber.Ctx) error {
-    return handlers.PostUsers(c, db)
-   })
+
+
    port := os.Getenv("PORT")
    if port == "" {
        port = "3000"
