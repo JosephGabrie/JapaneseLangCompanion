@@ -1,21 +1,26 @@
-<<<<<<< HEAD
 const term = document.querySelector('#term');
 const definition = document.querySelector('#definition');
 const checkButton = document.querySelector('#checkButton');
 const nextButton = document.querySelector('#nextButton');
 
-const words = {
-    Hello: "hola",
-    Bye: "Adios",
-    "love you": "te amo"
-};
+let hiraganaData = []; // This will hold the fetched data
 
-const data = Object.entries(words);
+fetch("japanese.json")
+    .then(response => response.json())
+    .then(data => {
+        hiraganaData = data.hiragana; // Save the data into the hiraganaData array
+        getRandomWord(); // Initial call to set a random word on page load
+    })
+    .catch(error => console.error('Error:', error));
 
 function getRandomWord() {
-    const randomTerm = data[Math.floor(Math.random() * data.length)];
-    term.innerHTML = `<h3>${randomTerm[0]}</h3>`;
-    definition.innerHTML = `<h3>${randomTerm[1]}</h3>`;
+    if (hiraganaData.length === 0) {
+        return; // Exit if no data is available
+    }
+
+    const randomItem = hiraganaData[Math.floor(Math.random() * hiraganaData.length)];
+    term.innerHTML = `<h3>${randomItem.character}</h3>`;
+    definition.innerHTML = `<h3>${randomItem.romanji}</h3>`;
     definition.style.display = 'none'; // Hide definition when changing term
 }
 
@@ -26,26 +31,3 @@ checkButton.addEventListener('click', function() {
 nextButton.addEventListener('click', function() {
     getRandomWord();
 });
-
-// Initial call to set a random word on page load
-getRandomWord();
-=======
-fetch(" http://127.0.0.1:3000/ ")
-    .then(res => res.json())
-    .then(data => {
-        const arrayLength = data.length;
-        
-        for(let i=0; i< arrayLength; i++) {
-            const characterData= data.find(item => item.kanakanji_id === i);
-            if (characterData) {
-                console.log(characterData.character);
-                document.getElementById("japLetter").innerHTML = characterData.character
-            }
-            console.log(data[i]);
-
-    
-        }
-        
-    })
-    .catch(error => console.error(error))
->>>>>>> origin/production
