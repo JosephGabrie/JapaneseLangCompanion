@@ -2,13 +2,15 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"japlearning/models"
 	"time"
-	"github.com/gofiber/fiber/v2"
 )
+
 func GetLearnKana(c *fiber.Ctx, db *sql.DB) error {
 
-	userID :=c.Locals("user_id").(int)
+	userID := c.Locals("user_id").(int)
 	var kanaKanjiID int
 	learnKanaKanjiList := make([]models.KanaKanji, 0, 6)
 
@@ -72,9 +74,15 @@ func GetReviewKanaKanji(c *fiber.Ctx, db *sql.DB) error {
 	return c.JSON(reviewKanaKanjiList)
 }
 
+func CreateSchema(c *fiber.Ctx, db *sql.DB) error {
+	// Define the schema name
+	schemaName := "test_schema"
 
-func DeleteKanaKanji(c *fiber.Ctx, db *sql.DB) error {
-	kanaKanjiToDelete := c.Query("")
-	db.Exec("DELETE from todos WHERE item=$1", kanaKanjiToDelete)
-	return c.SendString("deleted")
+	// Prepare the SQL statement for schema creation
+	_, err := db.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schemaName))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("Error creating schema: %v", err))
+	}
+
+	return c.SendString("Schema created successfully!")
 }
